@@ -7,7 +7,8 @@ general:
     plot_combined: True
 
 all:
-    output: &output /Users/ben/PostDoc/P2M_HDF5/Data_lab/VRST/Fine_scan
+#    output: &output /Users/ben/PostDoc/P2M_HDF5/Data_lab/VRST/Fine_scan
+    output: &output /Users/ben/PostDoc/P2M_HDF5/Data_lab/VRST
 
 raw:
     #input: /Users/ben/PostDoc/P2M_HDF5/Data_lab/VRST/VRST18k1to21k2_271p_AV_02_dscrmbld_DLSraw.h5
@@ -61,6 +62,21 @@ processed:
     col: 150
     row: null
     
+    interactive: False
+
+    method: [plot]
+
+correction:
+    input: *output
+    output: *output
+
+    measurement: adccal
+
+    adc: [0, 6]
+    frame: null
+    col: [100]
+    row: [200]
+
     interactive: False
 
     method: [plot]
