@@ -2,7 +2,7 @@ import copy
 import matplotlib
 # Generate images without having a window appear:
 # this prevents sending remote data to locale PC for rendering
-matplotlib.use('Agg')  # Must be before importing matplotlib.pyplot or pylab!
+matplotlib.use('TkAgg')  # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt  # noqa E402
 
 from plot_base import PlotBase  # noqa E402
@@ -24,14 +24,21 @@ class Plot(PlotBase):
 
     def _generate_single_plot(self, data, plot_title, label, out_fname):
 
-        fig = plt.figure(figsize=None)
+        fig, axs = plt.subplots(nrows=1, sharex=True)
 
         plt.imshow(data)
-        plt.xlabel("columns")
-        plt.ylabel("rows")
+        cbar = plt.colorbar()
+        cbar.ax.set_ylabel("ADU", rotation=270, labelpad=15)
+        axs.invert_xaxis()
+
+        plt.xlabel("Columns")
+        plt.ylabel("Rows")
 
         fig.suptitle(plot_title)
         fig.savefig(out_fname)
+
+        if self._interactive:
+            plt.show()
 
         fig.clf()
         plt.close(fig)

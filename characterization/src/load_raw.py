@@ -79,8 +79,6 @@ class LoadRaw():
             data["r_fine"] = fine
             data["r_gain"] = gain
 
-        self.set_n_cols(data["s_coarse"].shape[1])
-        self.set_n_rows(data["s_coarse"].shape[2])
         return data
 
     def get_vin(self):

@@ -34,8 +34,6 @@ class PlotBase():
                   .format(self._adc, self._frame, self._row, self._col))
 
         self._vin = loader.get_vin()
-        self._n_rows = loader.get_n_rows()
-        self._n_cols = loader.get_n_cols()
 
         # to ease nameing plots
         self._adc_title = utils.convert_slice_to_tuple(self._adc)

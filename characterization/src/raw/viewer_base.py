@@ -1,5 +1,4 @@
 import copy
-from collections import namedtuple
 import matplotlib.pyplot as plt
 
 from plot_base import PlotBase
