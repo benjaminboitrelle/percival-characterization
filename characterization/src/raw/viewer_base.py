@@ -37,4 +37,5 @@ class ViewerBase(PlotBase):
         # connect to arrow keys
         fig.canvas.mpl_connect("key_press_event", self._tracker.on_key_press)
 
-        plt.show()
+        if self._interactive:
+            plt.show()
