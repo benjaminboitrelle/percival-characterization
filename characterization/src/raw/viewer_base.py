@@ -25,6 +25,8 @@ class ViewerBase(PlotBase):
         pass
 
     def plot_combined(self):
+        self.create_dir()
+
         if self._tracker is None:
             msg = "No tracker specified. Abort."
             raise Exception(msg)
