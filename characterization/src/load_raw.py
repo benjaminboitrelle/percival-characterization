@@ -45,6 +45,8 @@ class LoadRaw():
         self._n_frames = None
         self._n_groups = None
         self._n_total_frames = None
+        self._n_rows = None
+        self._n_cols = None
 
     def load_data(self):
         """Loads the input data.
@@ -77,6 +79,8 @@ class LoadRaw():
             data["r_fine"] = fine
             data["r_gain"] = gain
 
+        self.set_n_cols(data["s_coarse"].shape[1])
+        self.set_n_rows(data["s_coarse"].shape[2])
         return data
 
     def get_vin(self):
@@ -115,3 +119,17 @@ class LoadRaw():
                 raise Exception(msg)
 
             return float(vin[0][0])
+
+    def set_n_rows(self, n_rows):
+        print("N_rows {}".format(n_rows))
+        self._n_rows = n_rows
+
+    def get_n_rows(self):
+        return self._n_rows
+
+    def set_n_cols(self, n_cols):
+        print("N_cols {}".format(n_cols))
+        self._n_cols = n_cols
+
+    def get_n_cols(self):
+        return self._n_cols

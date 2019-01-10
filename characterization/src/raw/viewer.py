@@ -9,19 +9,16 @@ class ViewTracker(IndexTracker):
         self._subplots_rows = 2
         self._subplots_cols = 3
 
-        self._n_rows = 1440
-        self._n_cols = 1484
-
         self._fig, self._ax = plt.subplots(nrows=self._subplots_rows,
                                            ncols=self._subplots_cols,
                                            figsize=(14, 8))
-#                                           figsize=(12.5, 8))
-#                                           sharex=True,
-#                                           sharey=True)
 
         plt.subplots_adjust(wspace=0.35, hspace=0.35)
 
         self._slices, _, _ = self._data["s_coarse"].shape
+        d_coarse = self._data["s_coarse"]
+        self._n_frames, self._n_cols, self._n_rows = d_coarse.shape
+
         self._frame = 0
 
         self._cmap = plt.cm.jet

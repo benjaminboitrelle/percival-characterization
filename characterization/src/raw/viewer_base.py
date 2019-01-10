@@ -15,7 +15,6 @@ class ViewerBase(PlotBase):
         new_kwargs["dims_overwritten"] = True
 
         super().__init__(**new_kwargs)
-
         self._tracker = None
 
     def plot_sample(self):
