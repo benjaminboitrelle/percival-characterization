@@ -26,7 +26,7 @@ def get_arguments():
                         help="Path of input directory containing HDF5 files "
                              "or in the case of data_type raw to the input "
                              "file to characterize")
-    parser.add_argument("--metadata_file",
+    parser.add_argument("--metadata_fname",
                         type=str,
                         help="File name containing the metadata information.")
 
@@ -39,7 +39,8 @@ def get_arguments():
                         type=str,
                         choices=["raw",
                                  "gathered",
-                                 "processed"],
+                                 "processed",
+                                 "corrected"],
                         help="The data type to analyse")
 
     parser.add_argument("--adc",
@@ -55,8 +56,8 @@ def get_arguments():
                         type=int,
                         nargs="+",
                         default=None,
-                        help="The row(s) of the ADC group to create plots for.\n"
-                             "Options:\n"
+                        help="The row(s) of the ADC group to create plots for."
+                             "\nOptions:\n"
                              "specify one value, e.g. --row 0 means take "
                              "only first row of ADC group"
                              "specify start and stop value, e.g. --row 0 5 "
@@ -119,7 +120,8 @@ def insert_args_into_config(args, config):
         sys.exit(1)
 
     try:
-        c_general["plot_combined"] = args.plot_combined or c_general["plot_combined"]
+        c_general["plot_combined"] = (args.plot_combined
+                                      or c_general["plot_combined"])
     except:
         raise Exception("No data type specified. Abort.")
         sys.exit(1)
@@ -151,14 +153,14 @@ def insert_args_into_config(args, config):
     if data_type == "raw":
 
         try:
-            c_data_type["metadata_file"] = (args.metadata_file
-                                             or c_data_type["metadata_file"])
+            c_data_type["metadata_fname"] = (args.metadata_fname
+                                            or c_data_type["metadata_fname"])
         except:
             raise Exception("No input specified. Abort.")
             sys.exit(1)
 
     else:
-        c_data_type["metadata_file"] = None
+        c_data_type["metadata_fname"] = None
 
     # for adc equals 0 ".. or .." does not work
     if args.adc is not None:
@@ -196,31 +198,47 @@ class Analyse(object):
         config = utils.load_config(args.config_file)
         insert_args_into_config(args, config)
 
-        self._data_type = config["general"]["data_type"]
-        self._run_id = config["general"]["run"]
-        self._plot_sample = config["general"]["plot_sample"]
-        self._plot_reset = config["general"]["plot_reset"]
-        self._plot_combined = config["general"]["plot_combined"]
-        self._input_dir = config[self._data_type]["input"]
-        self._metadata_file = config[self._data_type]["metadata_file"]
-        self._output_dir = config[self._data_type]["output"]
-        self._adc = config[self._data_type]["adc"]
-        self._frame = config[self._data_type]["frame"]
-        self._col = config[self._data_type]["col"]
-        self._row = config[self._data_type]["row"]
-        self._method_list = config[self._data_type]["method"]
+        self._config = config
 
+        self._data_type = self._config["general"]["data_type"]
+        self._run_id = self._config["general"]["run"]
+        self._plot_sample = self._config["general"]["plot_sample"]
+        self._plot_reset = self._config["general"]["plot_reset"]
+        self._plot_combined = self._config["general"]["plot_combined"]
+        self._input = self._config[self._data_type]["input"]
+        self._metadata_fname = self._config[self._data_type]["metadata_fname"]
+        self._output = self._config[self._data_type]["output"]
+        self._adc = self._config[self._data_type]["adc"]
+        self._frame = self._config[self._data_type]["frame"]
+        self._col = self._config[self._data_type]["col"]
+        self._row = self._config[self._data_type]["row"]
+        self._method_list = self._config[self._data_type]["method"]
+        self._interactive = self._config[self._data_type]["interactive"]
 
-        if self._row is None:
-            self._row = slice(None)
-        elif type(self._row) == int:
-            self._row
-        elif len(self._row) == 1:
-            self.row = self._row[0]
-        else:
-            self._row = slice(*self._row)
+        self.set_indices()
 
         self.load_methods()
+
+    def set_indices(self):
+        """Interprete which indices are chosen.
+        """
+
+        def determine_slice(indices):
+            if indices is None:
+                indices = slice(None)
+            elif type(indices) == int:
+                pass
+            elif len(indices) == 1:
+                indices = indices[0]
+            else:
+                indices = slice(*indices)
+
+            return indices
+
+        self._row = determine_slice(self._row)
+        self._col = determine_slice(self._col)
+        self._frame = determine_slice(self._frame)
+        self._adc = determine_slice(self._adc)
 
     def load_methods(self):
         """Load data type specific methods.
@@ -234,34 +252,48 @@ class Analyse(object):
     def run(self):
 
         if self._data_type == "raw":
-            input_fname_templ = self._input_dir
+            input_fname_templ = self._input
         else:
             file_name = "col{col_start}-{col_stop}_{data_type}.h5"
             file_name = os.path.join("{data_type}", file_name)
-            input_fname_templ = os.path.join(self._input_dir,
+            input_fname_templ = os.path.join(self._input,
                                              self._run_id,
                                              file_name)
-            metadata_fname = None
+            self._metadata_fname = None
 
         kwargs = dict(
-            input_fname_templ=input_fname_templ,
-            metadata_fname=self._metadata_file,
+            input=self._input,
+            input_fname=input_fname_templ,
+            metadata_fname=self._metadata_fname,
+            output=self._output,
             output_dir=None,
             adc=self._adc,
             frame=self._frame,
             row=self._row,
-            col=self._col
+            col=self._col,
+            run=self._run_id,
+            method_properties=None,
+            interactive=self._interactive
         )
 
-        print("Configured: adc={}, frame={}, row={}, col={}"
-              .format(self._adc, self._frame, self._row, self._col))
+        print("Configured: adc={}, frame={}, row={}, col={}, interactive={}"
+              .format(self._adc,
+                      self._frame,
+                      self._row,
+                      self._col,
+                      self._interactive))
 
         loaded_data = None
         for method in self._method_list:
             print("loading method: {}".format(method))
             method_m = __import__(method).Plot
 
-            kwargs["output_dir"] = os.path.join(self._output_dir,
+            # loading method properties
+            if method in self._config[self._data_type]:
+                prop = self._config[self._data_type][method]
+                kwargs["method_properties"] = prop
+
+            kwargs["output_dir"] = os.path.join(self._output,
                                                 self._run_id,
                                                 "characterization",
                                                 self._data_type,

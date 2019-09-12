@@ -1,15 +1,14 @@
+"""Base class for all processing methods
+"""
 from collections import namedtuple
-import h5py
-import sys
-import numpy as np
-import time
 import os
+import sys
+import time
 from datetime import date
+import h5py
+import numpy as np
 
-try:
-    CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
-except:
-    CURRENT_DIR = os.path.dirname(os.path.realpath('__file__'))
+CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 CALIBRATION_DIR = os.path.dirname(os.path.dirname(CURRENT_DIR))
 BASE_DIR = os.path.dirname(CALIBRATION_DIR)
@@ -18,27 +17,36 @@ SHARED_DIR = os.path.join(BASE_DIR, "shared")
 if SHARED_DIR not in sys.path:
     sys.path.insert(0, SHARED_DIR)
 
-import utils  # noqa E402
-from _version import __version__  # noqa E402
+from _version import __version__
 
 
 class ProcessBase(object):
+    """Base class for all processing methods
+    """
     LinearFitResult = namedtuple("linear_fit_result", ["solution",
                                                        "residuals",
                                                        "rank",
                                                        "singular_values",
                                                        "r_squared"])
 
-    def __init__(self, in_fname, out_fname, method):
+    def __init__(self, **kwargs):
 
-        self._in_fname = in_fname
-        self._out_fname = out_fname
-        self.method = method
+        self._in_fname = None
+        self._in_dir = None
+        self._out_fname = None
+        self._method = None
 
+        # add all entries of the kwargs dictionary into the class namespace
+        for key, value in kwargs.items():
+            setattr(self, "_" + key, value)
+
+        self._adc_part = self._method_properties["fit_adc_part"]
         self._result = {}
+        self._metadata = {}
 
         print("\n\nStart process")
         print("in_fname:", self._in_fname)
+        print("in_dir:", self._in_dir)
         print("out_fname:", self._out_fname)
         print()
 
@@ -46,6 +54,8 @@ class ProcessBase(object):
         pass
 
     def run(self):
+        """Run the processing
+        """
         total_time = time.time()
 
         self._initiate()
@@ -67,7 +77,7 @@ class ProcessBase(object):
 
     def _get_mask(self, data):
         # find out if the col was effected by frame loss
-        return (data == 0)
+        return data == 0
 
     def _mask_out_problems(self, data, mask=None):
         if mask is None:
@@ -121,7 +131,7 @@ class ProcessBase(object):
             offset = y_mean
 
             res = [
-                (slope, offset),  #solution
+                (slope, offset),  # solution
                 None,  # residuals
                 None,  # rang
                 None  # singular_values
@@ -132,17 +142,18 @@ class ProcessBase(object):
             #                residuals,
             #                rank,
             #                singular values
-            res = np.linalg.lstsq(A, y_masked)
+            res = np.linalg.lstsq(A, y_masked, rcond=None)
 
         if enable_r_squared:
             if all_zero:
                 r_squared = 1
             else:
                 try:
-                    ss_tot = np.dot(y_diff, y_diff)
-                    ss_res = res[1]  # this are the residuals given by lstsq
-
+#                    ss_tot = np.dot(y_diff, y_diff)
+                    ss_tot = y_diff.size * y_diff.var()
+                    ss_res = res[1]
                     r_squared = 1 - ss_res/ss_tot
+
                 except:
                     print("ERROR when calculating r squared.")
                     print("ss_tot", ss_tot)
@@ -164,32 +175,47 @@ class ProcessBase(object):
         """Writes the result dictionary and additional metadata into a file.
         """
 
-        with h5py.File(self._out_fname, "w", libver='latest') as f:
+        with h5py.File(self._out_fname, "w", libver='latest') as out_f:
 
             # write data
 
             for key in self._result:
                 if "type" in self._result[key]:
-                    f.create_dataset(self._result[key]['path'],
-                                     data=self._result[key]['data'],
-                                     dtype=self._result[key]['type'])
+                    out_f.create_dataset(self._result[key]['path'],
+                                         data=self._result[key]['data'],
+                                         dtype=self._result[key]['type'])
                 else:
-                    f.create_dataset(self._result[key]['path'],
-                                     data=self._result[key]['data'])
-
+                    out_f.create_dataset(self._result[key]['path'],
+                                         data=self._result[key]['data'])
 
             # write metadata
 
             metadata_base_path = "collection"
 
             today = str(date.today())
-            f.create_dataset("{}/creation_date".format(metadata_base_path),
-                             data=today)
+            out_f.create_dataset("{}/creation_date".format(metadata_base_path),
+                                 data=today)
 
             name = "{}/{}".format(metadata_base_path, "version")
-            f.create_dataset(name, data=__version__)
+            out_f.create_dataset(name, data=__version__)
 
             name = "{}/{}".format(metadata_base_path, "method")
-            f.create_dataset(name, data=self.method)
+            out_f.create_dataset(name, data=self._method)
 
-            f.flush()
+            name = "{}/{}".format(metadata_base_path,
+                                  "gathered_directory_"+self._adc_part)
+            out_f.create_dataset(name, data=self._in_dir)
+
+#            name = "{}/{}".format(metadata_base_path, "adc_part")
+#            out_f.create_dataset(name, data=self._adc_part)
+
+            gname = "collection"
+            for key, value in iter(self._metadata.items()):
+                name = "{}/{}".format(gname, key)
+                try:
+                    out_f.create_dataset(name, data=value)
+                except:
+                    print("Error in", name, value.dtype)
+                    raise
+
+            out_f.flush()

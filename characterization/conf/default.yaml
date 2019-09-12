@@ -1,5 +1,5 @@
 general:
-    data_type: gathered
+    data_type: raw
     run: DLSraw
 
     plot_sample: True
@@ -7,23 +7,26 @@ general:
     plot_combined: True
 
 all:
-    output: &output /gpfs/cfel/fsds/labs/agipd/calibration/scratch/user/kuhnm/percival_tests/processed
-
+    output: &output /Volumes/LACIE_SHARE/Percival/Data_lab_october18
 raw:
-    input: /gpfs/cfel/fsds/labs/agipd/calibration/scratch/user/kuhnm/percival_tests/raw/PSVoltFromVin_fn_reduced_iFbiasN5000/PSVoltFromVin15000_DLSraw.h5
-    metadata_file: /gpfs/cfel/fsds/labs/agipd/calibration/scratch/user/kuhnm/percival_tests/raw/PSVoltFromVin_fn_reduced_iFbiasN5000/file.dat
+    input: /Volumes/LACIE_SHARE/Percival/2018.12.08_3G/DLSraw/gathered/2018.10.17h1527_seqMode_10hrs_dscrmbld_DLSraw.h5
+    metadata_fname: null
 
     output: *output
 
     measurement: adccal
 
     adc: null
-    frame: 2
-    col: 100
+    frame: 8
+    col: 500
     row: 100
 
-    #method: [viewer]
-    method: [image, plot_coarse-fine_vs_image]
+    interactive: True
+    method: [viewer]
+
+    viewer:
+      err_below: -0.1
+    #method: [image, plot_coarse-fine_vs_image, viewer]
 
 gathered:
     input: *output
@@ -33,8 +36,9 @@ gathered:
 
     adc: 0
     frame: null
-    col: 100
-    row: null
+    col: 60
+    row: 10
+    interactive: False
 
     method: [plot, hist, hist_2d]
     #method: [plot_sample_vs_reset]
@@ -45,9 +49,33 @@ processed:
 
     measurement: adccal
 
-    adc: 0
+    adc: 2
     frame: null
     col: 100
-    row: null
+    row: 100
 
-    method: [plot]
+    interactive: false
+    method: [viewer]
+
+    viewer:
+        all_cols: True
+
+corrected:
+    input: *output
+    output: *output
+
+    measurement: adccal
+
+    adc: 2
+    frame: 4
+    col: 61
+    row: 10
+
+    interactive: True
+
+    method: [viewer]
+
+    plot:
+        all_cols: False
+    viewer:
+        all_cols: True

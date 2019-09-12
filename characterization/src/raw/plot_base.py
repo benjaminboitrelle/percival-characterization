@@ -1,33 +1,19 @@
 from collections import namedtuple
-import glob
-import h5py
-import numpy as np
 import os
 
 from load_raw import LoadRaw
+import utils
 
 
 class PlotBase():
     LoadedData = namedtuple("loaded_data", ["data"])
 
-    def __init__(self,
-             input_fname_templ,
-             metadata_fname,
-             output_dir,
-             adc,
-             frame,
-             col,
-             row,
-             loaded_data=None,
-             dims_overwritten=False):
+    def __init__(self, loaded_data=None, dims_overwritten=False, **kwargs):
 
-        self._input_fname = input_fname_templ
-        self._metadata_fname = metadata_fname
-        self._output_dir = os.path.normpath(output_dir)
-        self._adc = adc
-        self._frame = frame
-        self._col = col
-        self._row = row
+        # add all entries of the kwargs dictionary into the class namespace
+        for key, value in kwargs.items():
+            setattr(self, "_" + key, value)
+
         self._dims_overwritten = dims_overwritten
 
         loader = LoadRaw(input_fname=self._input_fname,
@@ -42,7 +28,18 @@ class PlotBase():
         else:
             self._data = loaded_data.data
 
+        if self._dims_overwritten:
+            print("Overwritten configuration " +
+                  "(adc={}, frame={}, row={}, col={})"
+                  .format(self._adc, self._frame, self._row, self._col))
+
         self._vin = loader.get_vin()
+
+        # to ease nameing plots
+        self._adc_title = utils.convert_slice_to_tuple(self._adc)
+        self._frame_title = utils.convert_slice_to_tuple(self._frame)
+        self._row_title = utils.convert_slice_to_tuple(self._row)
+        self._col_title = utils.convert_slice_to_tuple(self._col)
 
     def create_dir(self):
         if not os.path.exists(self._output_dir):
@@ -69,7 +66,7 @@ class PlotBase():
 
         return PlotBase.LoadedData(data=self._data)
 
-    def _generate_single_plot(self, x, data, plot_title, label, out_fname):
+    def _generate_single_plot(self, data, plot_title, label, out_fname):
         print("_generate_single_plot method is not implemented.")
 
     def plot_sample(self):
@@ -77,7 +74,7 @@ class PlotBase():
 
         pos = "frame={}".format(self._frame)
         suffix = "_frame{}".format(self._frame)
-        out = self._output_dir+"/"
+        out = self._output_dir+"/sample/"
 
         self._generate_single_plot(data=self._data["s_coarse"],
                                    plot_title="Sample Coarse, "+pos,
@@ -97,7 +94,7 @@ class PlotBase():
 
         pos = "frame={}".format(self._frame)
         suffix = "_frame{}".format(self._frame)
-        out = self._output_dir+"/"
+        out = self._output_dir+"/reset/"
 
         self._generate_single_plot(data=self._data["r_coarse"],
                                    plot_title="Reset Coarse, "+pos,
