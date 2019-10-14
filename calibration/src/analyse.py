@@ -42,7 +42,55 @@ class Analyse(object):
                  n_cols,
                  method,
                  method_properties,
-                 n_processes):
+                 n_processes,
+                 part):
+
+#        config = utils.load_config(args.config_file)
+#        insert_args_into_config(args, config)
+#
+#        # fix format of command line parameter
+#        if config["general"]["n_cols"] in ["None", "null", None]:
+#            config["general"]["n_cols"] = None
+#        else:
+#            config["general"]["n_cols"] = int(config["general"]["n_cols"])
+#
+#        print("Configuration:")
+#        print(json.dumps(config, sort_keys=True, indent=4))
+#
+#        run_type = config["general"]["run_type"]
+#        run_id = config["general"]["run"]
+#        measurement = config["general"]["measurement"]
+#        n_cols = config["general"]["n_cols"]
+#        n_processes = config["general"]["n_processes"]
+#
+#        out_base_dir = config[run_type]["output"]
+#        in_base_dir = config[run_type]["input"]
+#        method = config[run_type]["method"]
+#        method_properties = config[run_type][method]
+#
+#        # generate file paths
+#        if run_type == "gather":
+#            in_base_dir = in_base_dir
+#            # to allow additional directories for descramble
+#    #        out_base_dir = os.path.join(out_base_dir, run_id, "{run_dir}")
+#            out_base_dir = os.path.join(out_base_dir, run_id, "gathered")
+#            create_outdir = False
+#        else:
+#            in_base_dir = os.path.join(in_base_dir, run_id, "gathered")
+#            out_base_dir = os.path.join(out_base_dir, run_id, "processed")
+#            create_outdir = True
+#
+#        obj = Analyse(in_base_dir=in_base_dir,
+#                      out_base_dir=out_base_dir,
+#                      create_outdir=create_outdir,
+#                      run_id=run_id,
+#                      run_type=run_type,
+#                      measurement=measurement,
+#                      n_cols=n_cols,
+#                      method=method,
+#                      method_properties=method_properties,
+#                      n_processes=n_processes,)
+#        obj.run()
 
         self._in_base_dir = in_base_dir
         self._out_base_dir = out_base_dir
@@ -69,6 +117,19 @@ class Analyse(object):
         self._measurement = measurement
         self._method = method
         self._method_properties = method_properties
+        self._part = part
+        # generate file paths
+        if run_type == "gather":
+            in_base_dir = in_base_dir
+            # to allow additional directories for descramble
+    #        out_base_dir = os.path.join(out_base_dir, run_id, "{run_dir}")
+            out_base_dir = os.path.join(out_base_dir, run_id, "gathered")
+            create_outdir = False
+        else:
+            in_base_dir = os.path.join(in_base_dir, run_id, "gathered")
+            out_base_dir = os.path.join(out_base_dir, run_id, "processed")
+            create_outdir = True
+        self.run_gather()
 
     def _set_job_sets(self):
         all_jobs = range(self._n_parts)
@@ -131,13 +192,13 @@ class Analyse(object):
 
         # define output files
         out_dir, out_file_name = self.generate_gather_path(self._out_base_dir)
-        out_fname = out_file_name.format(col_start=0,
-                                         col_stop=self._n_cols-1)
+        out_fname = out_file_name.format(col_start=self._n_cols * self._part,
+                                         col_stop=(self._part+1) * self._n_cols-1)
         out_fname = os.path.join(out_dir, out_fname)
 
         if self._create_outdir:
             utils.create_dir(out_dir)
-
+        print(self._n_cols * self._part)
         kwargs = dict(
                 input=self._in_base_dir,
                 in_fname=in_fname,
@@ -147,7 +208,7 @@ class Analyse(object):
                 run=self._run_id,
                 n_rows=self._n_rows,
                 n_cols=self._n_cols,
-                part=0,
+                part=self._part,
                 method_properties=self._method_properties
                 )
 

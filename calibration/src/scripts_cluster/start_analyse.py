@@ -39,12 +39,10 @@ if SHARED_DIR not in sys.path:
 
 class StartAnalyse(object):
     def __init__(self):
-        print(CURRENT_DIR)
-
         self.in_base_dir = "/Volumes/LACIE_SHARE/Percival/Data_lab_october18/Coarse_scan"
-        self.out_base_dir = "/Volumes/LACIE_SHARE/Percival/Data_lab_october18/Coarse_scan"
+        self.out_base_dir = "/Volumes/LACIE_SHARE/Percival/Data_lab_october18/Coarse_scan/DLSraw"
 
-        self.create_outdir = None
+        self.create_outdir = False
         self.n_rows_total = 1484
         self.n_cols_total = 1440
         self.n_cols = 32
@@ -78,14 +76,11 @@ class StartAnalyse(object):
         """ Drive the muliprocessing of the analaysis.
         """
 
-
-        jobs = []
         for job_set in self.job_sets:
             jobs = []
             for p in job_set:
                 print(p)
 
-                print(args)
                 proc = multiprocessing.Process(target=Analyse,
                                                args=(self.in_base_dir,
                                                      self.out_base_dir,
@@ -101,8 +96,8 @@ class StartAnalyse(object):
                 jobs.append(proc)
                 proc.start()
 
-            for job in jobs:
-                job.join()
+        for job in jobs:
+            job.join()
 
 
 if __name__ == "__main__":
