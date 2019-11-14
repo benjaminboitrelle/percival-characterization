@@ -1,3 +1,7 @@
 *__pycache__
 *.pyc
 *.swp
+.scannerwork
+venv
+.spyproject
+sonar-project.properties
