@@ -43,9 +43,9 @@ class LoadProcessed():
             }
         }
         self._metadata_paths = {
-                "roi_crs": "collection/roi_coarse",
-                "crs_gathered": "collection/gathered_directory_coarse",
-                "fn_gathered": "collection/gathered_directory_fine"
+            "roi_crs": "collection/roi_coarse",
+            "crs_gathered": "collection/gathered_directory_coarse",
+            "fn_gathered": "collection/gathered_directory_fine"
         }
 
     def set_input_fname(self):
