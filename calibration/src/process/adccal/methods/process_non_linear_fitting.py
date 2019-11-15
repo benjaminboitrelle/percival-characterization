@@ -59,7 +59,7 @@ class Process(ProcessAdccalBase):
         vin = self._fill_vin_total_frames(data["vin"])
         s_offset = self._result["s_offset"]["data"]
         s_slope = self._result["s_slope"]["data"]
-        s_poly2 = self._result["s_poly_2"]["data"]
+        s_poly_2 = self._result["s_poly_2"]["data"]
 
 #        r_parameters = self._result["r_parameters"]["data"]
         s_roi_map = self._result["s_roi"]["data"]
@@ -78,9 +78,11 @@ class Process(ProcessAdccalBase):
             roi = np.where(crs == better_coarse)
             s_roi_map[adc, col, row] = better_coarse
             if np.any(roi):
-                fit_coeffs = np.polyfit(vin[roi], adu[roi], 1)
-                s_offset[adc, col, row] = tuple(fit_coeffs)
-                # s_slope[adc, col, row] = fit_coeffs[1]
-                # s_poly2[adc, col, row] = fit_coeffs[2]
+                fit_coeffs = np.polyfit(vin[roi], adu[roi], 2)
+                s_offset[adc, col, row] = fit_coeffs[0]
+                s_slope[adc, col, row] = fit_coeffs[1]
+                s_poly_2[adc, col, row] = fit_coeffs[2]
                 # s_parameters[adc, col, row] = fit_coeffs
-        # self._result["s_parameters"]["data"] = s_parameters
+        self._result["s_offset"]["data"] = s_offset
+        self._result["s_slope"]["data"] = s_slope
+        self._result["s_poly_2"]["data"] = s_poly_2
