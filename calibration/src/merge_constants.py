@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import time
+import re
 import numpy as np
 
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -35,11 +36,28 @@ class MergeConstants(object):
     def set_n_rows(self, n_rows):
         self._n_rows = n_rows
 
+    def tryint(self, s):
+        try:
+            return int(s)
+        except ValueError:
+            return s
+
+    def alphanum_key(self, s):
+        """ Turn a string into a list of string and number chunks.
+           "z23a" -> ["z", 23, "a"]
+        """
+        return [self.tryint(c) for c in re.split('([0-9]+)', s) ]
+
+    def sort_nicely(l):
+        """ Sort the given list in the way that humans expect.
+        """
+        l.sort(key=alphanum_key)
+
     def get_list_of_files(self):
         ''' Return a list of files contained inside the input directory
         '''
-        files_list = sorted(os.listdir(self._input_dir),
-                            key=lambda x: int(x.split(".")[0]))
+        files_list = os.listdir(self._input_dir)
+        files_list.sort(key=self.alphanum_key)
 
         return files_list
 
@@ -59,6 +77,7 @@ class MergeConstants(object):
 
         data = {}
         for columns, file_list in files.items():
+            print(file_list)
             data[columns] = {}
             data_to_concatenate = {}
             for fname in file_list:
@@ -71,6 +90,7 @@ class MergeConstants(object):
                     else:
                         if key not in data_to_concatenate:
                             data_to_concatenate[key] = {}
+                        print(value.shape)
                         data_to_concatenate[key] = value
 
             for key, value in data_to_concatenate.items():
@@ -127,6 +147,7 @@ class MergeConstants(object):
         fine = self.get_list_of_files()
         files_fn = self.get_files(fine)
         data_fn, fn_shape = self.get_file_content(files_fn)
+        print(crs_shape[0], fn_shape[0])
         data = self.merge_constants(data_crs, data_fn)
         merged_data = self.merge_dictionaries(data,
                                               crs_shape[0])
@@ -152,6 +173,7 @@ def get_arguments():
                         type=str,
                         required=True,
                         help="Input directory to load Fine data")
+
     parser.add_argument("--output_dir",
                         type=str,
                         required=True,
