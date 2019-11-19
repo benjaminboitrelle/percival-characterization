@@ -21,7 +21,7 @@ class Process(ProcessAdccalBase):
                 "path": "sample/fine/offset"
             },
             "s_slope": {
-                "data": np.NaN * np.zeros(shapes["offset"], dtype=np.float64),
+                "data": np.NaN * np.zeros(shapes["offset"]),
                 "path": "sample/fine/slope"
             },
             "s_poly_2": {
@@ -59,7 +59,7 @@ class Process(ProcessAdccalBase):
         vin = self._fill_vin_total_frames(data["vin"])
         s_offset = self._result["s_offset"]["data"]
         s_slope = self._result["s_slope"]["data"]
-        s_poly_2 = self._result["s_poly_2"]["data"]
+        # s_poly_2 = self._result["s_poly_2"]["data"]
 
 #        r_parameters = self._result["r_parameters"]["data"]
         s_roi_map = self._result["s_roi"]["data"]
@@ -81,8 +81,8 @@ class Process(ProcessAdccalBase):
                 fit_coeffs = np.polyfit(vin[roi], adu[roi], 2)
                 s_offset[adc, col, row] = fit_coeffs[0]
                 s_slope[adc, col, row] = fit_coeffs[1]
-                s_poly_2[adc, col, row] = fit_coeffs[2]
+                # s_poly_2[adc, col, row] = fit_coeffs[2]
                 # s_parameters[adc, col, row] = fit_coeffs
         self._result["s_offset"]["data"] = s_offset
         self._result["s_slope"]["data"] = s_slope
-        self._result["s_poly_2"]["data"] = s_poly_2
+        # self._result["s_poly_2"]["data"] = s_poly_2

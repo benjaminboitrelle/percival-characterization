@@ -23,7 +23,7 @@ import utils
 
 class MergeConstants(object):
 
-    def __init__(self, input_dir_crs, input_dir_fn, outpur_dir, out_fname):
+    def __init__(self, input_dir_crs, input_dir_fn, output_dir, out_fname):
         self._input_dir = None
         self._input_dir_crs = input_dir_crs
         self._input_dir_fn = input_dir_fn
@@ -42,16 +42,17 @@ class MergeConstants(object):
         except ValueError:
             return s
 
-    def alphanum_key(self, s):
+    def alphanum_key(self, input_string):
         """ Turn a string into a list of string and number chunks.
            "z23a" -> ["z", 23, "a"]
         """
-        return [self.tryint(c) for c in re.split('([0-9]+)', s) ]
+        return [self.tryint(c) for c in re.split('([0-9]+)',
+                                                 input_string)]
 
-    def sort_nicely(l):
-        """ Sort the given list in the way that humans expect.
+    def sort_nicely(input_list):
+        """Sort the given list in the way that humans expect.
         """
-        l.sort(key=alphanum_key)
+        input_list.sort(key=alphanum_key)
 
     def get_list_of_files(self):
         ''' Return a list of files contained inside the input directory
@@ -103,7 +104,7 @@ class MergeConstants(object):
     def merge_constants(self, data_crs, data_fn):
 
         data = {}
-        for columns, file_list in data_crs.items():
+        for columns, _ in data_crs.items():
             data[columns] = {}
             for key, value in data_crs[columns].items():
                 data[columns][key] = value
